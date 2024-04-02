@@ -1,6 +1,5 @@
 from web3 import Web3, HTTPProvider, Account
 import json
-from datetime import datetime, timedelta
 import random
 from requests import Session
 
@@ -51,6 +50,23 @@ eth_contract = w3.eth.contract(eth_contract_address, abi=ERC20_ABI)
 eth_contract_address2 = Web3.to_checksum_address('0x199A21f0be1cdcdd882865E7d0F462e4778c5ee4')
 eth_contract2 = w3.eth.contract(eth_contract_address2, abi=ERC20_ABI2)
 
+def mint(account):
+    address = account.address
+    nonce = w3.eth.get_transaction_count(address)
+    a = random.randint(1, 9)
+
+    transaction = eth_contract.functions.mint(a).build_transaction({
+        'chainId': w3.eth.chain_id,
+        'gas': 200000,
+        'gasPrice': w3.eth.gas_price,
+        'from': address,
+        'nonce': nonce,
+        'value': 0
+
+    })
+    signed_txn = w3.eth.account.sign_transaction(transaction, private_key=account.key)
+    txn = w3.eth.send_raw_transaction(signed_txn.rawTransaction)
+    return txn
 
 
 def mint2(account):
@@ -60,7 +76,7 @@ def mint2(account):
 
     transaction = eth_contract2.functions.mint(a).build_transaction({
         'chainId': w3.eth.chain_id,
-        'gas': 118000,
+        'gas': 200000,
         'gasPrice': w3.eth.gas_price,
         'from': address,
         'nonce': nonce,
@@ -76,7 +92,8 @@ txt = 'privates.txt'
 with open(txt, 'r', encoding='utf-8') as keys_file:
     accounts = [Account.from_key(line.replace("\n", "")) for line in keys_file.readlines()]
     for account, proxy in zip(accounts, proxies):
-        provider.set_proxy(proxy)  # Устанавливаем прокси
-       # txn = mint(account)
+        provider.set_proxy(proxy)  
+        txn = mint(account)
         txn2 = mint2(account)
+        print(f'zora.superscan.network/tx/{txn.hex()}')
         print(f'zora.superscan.network/tx/{txn2.hex()}')
